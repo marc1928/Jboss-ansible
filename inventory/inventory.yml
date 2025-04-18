@@ -1,0 +1,6 @@
+all: 
+  children:
+    jboss:
+      hosts:
+        jboss1:
+          

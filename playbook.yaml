@@ -1,0 +1,37 @@
+---
+- name: déploiements ur Jboss en mode domaine
+  hosts: all
+  vars_files:
+    - datasource.yaml
+    - vars.yaml
+
+  tasks:
+    - name: Create server group 
+      shell: |
+        /opt/wildfly/bin/jboss-cli.sh --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
+        --commands="/server-group={{ sg_name }}:add(profile=full,socket-binding-group=full-sockets)"
+      register: created
+      tags: sgroup
+
+
+    - name: Create server within the server group
+      shell: |
+        {{ script_path }} --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
+        --commands="/host={{ host }}/server-config={{ server }}:add(group={{ sg_name }},socket-binding-default-interface=public,socket-binding-port-offset={{ offset }}),\
+        /host={{ host }}/server-config={{ server }}:start"
+      register: created_server
+      tags: server
+
+    - name: déployer une application 
+      shell: |
+        {{ script_path }} --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
+        --commands="deploy --name={{ war_name }} --server-groups={{ sg_name }}"
+      tags: deploy
+
+    - name : configuration de la jvm
+      shell: |
+        /opt/wildfly/bin/jboss-cli.sh --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
+        --commands="/host=slave3/server-config={{ server }}/jvm={{ jvm_name }}:add(heap-size={{ heap_size }}m,max-heap-size={{ max_heap_size }}m),\
+        /host={{ host }}/server-config={{ server }}:start"
+      register: jvm_created
+      tags: jvm
