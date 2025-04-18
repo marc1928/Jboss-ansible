@@ -1,5 +1,5 @@
 ---
-- name: déploiements ur Jboss en mode domaine
+- name: déploiements ur Jboss (wildfly version 24) (n mode domaine
   hosts: all
   vars_files:
     - datasource.yaml
