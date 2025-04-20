@@ -1,1 +1,1 @@
-ansible_user: apx08
+ansible_user: <your_ansible_user_to_connect>

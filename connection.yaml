@@ -1,5 +1,5 @@
-script_path: <path_to_script_jboss-cli.sh>
-ip: <ip_address>
-port: <port_number>
-user: <username>
-password: <password>
+script_path: /opt/wildfly/bin/jboss-cli.sh
+ip: 172.16.2.26
+port: 9990
+user: efiadmin8
+password: efiadmin8
