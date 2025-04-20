@@ -1,14 +1,14 @@
 ---
-- name: déploiements ur Jboss (wildfly version 24) (n mode domaine
-  hosts: all
+- name: Ansible Playbook for JBoss Domain Mode (WildFly 24) Management
+  hosts: jboss1
   vars_files:
-    - datasource.yaml
+    - connection.yaml
     - vars.yaml
 
   tasks:
-    - name: Création d'un server group 
+    - name: Creating a server group
       shell: |
-        /opt/wildfly/bin/jboss-cli.sh --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
+        {{ script_path }} --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
         --commands="/server-group={{ sg_name }}:add(profile={{ profile }},socket-binding-group=full-sockets)"
       tags: sgroup,creation
 
@@ -19,22 +19,33 @@
         /host={{ host }}/server-config={{ server }}:start"
       tags: server,creation
     
-
-    - name: déployer une application .war dans le serveur group
+    - name: Wait until the server is running
+      pause:
+        seconds: 15
+      tags: attente    
+    
+    - name: deploy a .war application to the group server
       shell: |
         {{ script_path }} --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
         --commands="deploy --name={{ war_name }} --server-groups={{ sg_name }}"
       tags: deploy,app
 
-    - name : modifier les paramètres de la JVM par défaut du host
-      shell: |
-        /opt/wildfly/bin/jboss-cli.sh --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
-        --commands="/host=slave3/server-config={{ server }}/jvm={{ jvm_name }}:add(heap-size={{ heap_size }}m,max-heap-size={{ max_heap_size }}m),\
-      notify: redémare le server
-      tags: jvm
+    - name: Set JVM heap size and max
+      shell: >
+        {{ script_path }} --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }}
+        --commands="/host={{ host }}/jvm={{ jvm_name }}:write-attribute(name=heap-size,value={{ heap_size }})"
+      tags: jvm,heap-siez
+
+    - name: Set JVM max heap size
+      shell: >
+        {{ script_path }} --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }}
+        --commands="/host={{ host }}/jvm={{ jvm_name }}:write-attribute(name=max-heap-size,value={{ max_heap_size }})"
+      notify: restart server
+      tags: jvm,max-heap-size
+
 
   handlers:
-    - name: redémare le server
+    - name: restart server
       shell: |
         {{ script_path }} --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \     
         --commands="/host={{ host }}/server-config={{ server }}:restart"

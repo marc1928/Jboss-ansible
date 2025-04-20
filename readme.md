@@ -53,3 +53,19 @@ This repository contains an Ansible playbook designed to automate the management
 - Test the playbook in a staging environment before deploying to production.
 
 
+## File structure
+```bash
+.
+|-- connection.yaml
+|-- image-1.png
+|-- image.png
+|-- inventory
+|   |-- group_vars
+|   |   `-- jboss.yaml
+|   |-- host_vars
+|   |   `-- jboss1.yaml
+|   `-- inventory.yml
+|-- playbook.yaml
+|-- readme.md
+`-- vars.yaml
+```
