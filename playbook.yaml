@@ -6,32 +6,36 @@
     - vars.yaml
 
   tasks:
-    - name: Create server group 
+    - name: Création d'un server group 
       shell: |
         /opt/wildfly/bin/jboss-cli.sh --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
-        --commands="/server-group={{ sg_name }}:add(profile=full,socket-binding-group=full-sockets)"
-      register: created
-      tags: sgroup
+        --commands="/server-group={{ sg_name }}:add(profile={{ profile }},socket-binding-group=full-sockets)"
+      tags: sgroup,creation
 
-
-    - name: Create server within the server group
+    - name: Create server(instance) dans le server group créé et démarrage du server
       shell: |
         {{ script_path }} --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
         --commands="/host={{ host }}/server-config={{ server }}:add(group={{ sg_name }},socket-binding-default-interface=public,socket-binding-port-offset={{ offset }}),\
         /host={{ host }}/server-config={{ server }}:start"
-      register: created_server
-      tags: server
+      tags: server,creation
+    
 
-    - name: déployer une application 
+    - name: déployer une application .war dans le serveur group
       shell: |
         {{ script_path }} --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
         --commands="deploy --name={{ war_name }} --server-groups={{ sg_name }}"
-      tags: deploy
+      tags: deploy,app
 
-    - name : configuration de la jvm
+    - name : modifier les paramètres de la JVM par défaut du host
       shell: |
         /opt/wildfly/bin/jboss-cli.sh --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \
         --commands="/host=slave3/server-config={{ server }}/jvm={{ jvm_name }}:add(heap-size={{ heap_size }}m,max-heap-size={{ max_heap_size }}m),\
-        /host={{ host }}/server-config={{ server }}:start"
-      register: jvm_created
+      notify: redémare le server
       tags: jvm
+
+  handlers:
+    - name: redémare le server
+      shell: |
+        {{ script_path }} --connect --controller={{ ip }}:{{ port }} --user={{ user }} --password={{ password }} \     
+        --commands="/host={{ host }}/server-config={{ server }}:restart"
+

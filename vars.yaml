@@ -6,3 +6,4 @@ jvm_name: marc-serveur-jvm
 heap_size: 100
 max_heap_size: 200
 war_name: webapp.war
+profile: full
